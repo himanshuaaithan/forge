@@ -1,16 +1,18 @@
 import { k8scoreV1Api } from "./config.js";
 
-export const createService = async (sendboxId) => {
+export const createService = async (sandboxId) => {
     const serviceManiFest = {
         metadata: {
-            name: `sendbox-service-${sendboxId}`,
-            lables: {
-                sendboxId: sendboxId
+            name: `sandbox-service-${sandboxId}`,
+            labels: {
+                app: 'sandbox',
+                sandboxId: sandboxId
             }
         },
         spec: {
             selector: {
-                sendboxId: sendboxId
+                app: 'sandbox',
+                sandboxId: sandboxId
             },
             ports: [
                 {

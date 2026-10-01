@@ -1,20 +1,20 @@
 import { ResourceApi } from "@kubernetes/client-node";
 import { k8scoreV1Api } from "./config.js";
 
-export const createpod = async (sendboxId) => {
+export const createpod = async (sandboxId) => {
     const podManiFest = {
         metadata: {
-            name: `sendbox-pod-${sendboxId}`,
+            name: `sandbox-pod-${sandboxId}`,
             labels: {
-                app: `sendbox`,
-                sendboxId: sendboxId
+                app: `sandbox`,
+                sandboxId: sandboxId
             }
         },
         spec: {
             containers: [
                 {
-                    image: "template",
-                    imagePullPolicy: "IfNotPresent",
+                    image: "template:latest",
+                    imagePullPolicy: "Always",
                     name: `sandbox-container`,
                     ports: [
                         {
