@@ -1,6 +1,6 @@
 import express from 'express'
 import morgan from 'morgan'
-import fs, { promises } from 'fs'
+import fs from 'fs'
 import path from 'path'
 
 
@@ -13,13 +13,43 @@ app.get('/api/agent/health', (req, res) => {
     res.status(200).json({ status: "ok" })
 })
 
-app.get('/list/file', async (req, res) => {
-    const Element = await fs.promises.readdir(working_dir)
+// ankur's code 
+app.get("/list-files", async (req, res) => {
+    try {
+        const listFiles = async (dir, baseDir) => {
+            const entries = await fs.promises.readdir(dir, { withFileTypes: true });
+            const files = [];
 
-    res.status(200).json({
-        message: 'element',
-        Element
-    })
+            for (const entry of entries) {
+                const fullPath = path.join(dir, entry.name);
+                const relativePath = path.relative(baseDir, fullPath);
+
+                if (entry.isDirectory() && ['node_modules', '.git', 'dist'].includes(entry.name)) {
+                    continue;
+                }
+
+                if (entry.isDirectory()) {
+                    files.push(...await listFiles(fullPath, baseDir));
+                } else {
+                    files.push(relativePath);
+                }
+            }
+
+            return files;
+        }
+
+        const files = await listFiles(working_dir, working_dir);
+        res.status(200).json({
+            message: 'Files listed successfully',
+            files,
+        });
+    } catch (err) {
+        res.status(500).json({
+            message: `Error listing files: ${err.message}`,
+            status: 'error',
+        });
+    }
+
 })
 
 app.get('/read-file', async (req, res) => {
