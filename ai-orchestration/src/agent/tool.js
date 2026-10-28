@@ -2,33 +2,57 @@ import * as z from "zod"
 import { tool } from "langchain"
 import axios from "axios";
 
-const fileApiUrl = "http://sandbox-service-aace6443-2263-4e9a-afbe-64d3afeb8c8c:3000"
-const updateApiUrl = "http://sandbox-service-aace6443-2263-4e9a-afbe-64d3afeb8c8c:3000"
-
 export const listFile = tool(
-    async () => {
+    // console.log('hello from listfile tool ✅'),
+    async ({ }, config) => {
+        const projectId = config?.context?.projectId ?? config?.configurable?.projectId;
+        if (!projectId) {
+            throw new Error(
+                'projectId missing in tool runtime config'
+            );
+        }
         try {
-            const response = await axios.get(`${fileApiUrl}/list-files`)
+            console.log('[read_files] Tool called');
+            console.log('[read_files] Context:', config.context);
+            console.log(`tool--->projectId:${projectId}`)
+            const writer = config.context?.writer ?? (() => { });
+            writer("Listing files in project directory...\n")
+            const response = await axios.get(`http://sandbox-service-${projectId}:3000/list-files`)
+            writer("Files listed successfully." + "Files: " + response.data.files.join(",") + "\n");
             return JSON.stringify(response.data.files);
+
         } catch (error) {
             throw new Error(error.message);
-
         }
     },
     {
         name: "list_files",
-        description: "list the files from folder",
+        description: "List all the files in the project directory. This is useful for understanding what files are available to work with.",
         schema: z.object({}),
     }
 );
 
 export const readFile = tool(
-    async ({ files }) => {
-        const response = await axios.get(
-            `${fileApiUrl}/read-file`,
-            { params: { files } }
-        )
-        return JSON.stringify(response.data.result)
+    async ({ files }, config) => {
+        const projectId = config?.context?.projectId ?? config?.configurable?.projectId;
+        if (!projectId) {
+            throw new Error(
+                'projectId missing in tool runtime config'
+            );
+        }
+        try {
+
+            const writer = config.context?.writer ?? (() => { });
+            writer("Reading files..." + files.join(",") + "\n");
+            const response = await axios.get(`http://sandbox-service-${projectId}:3000/read-file`,
+                { params: { files } }
+            )
+            writer('file read done')
+            return JSON.stringify(response.data.result)
+
+        } catch (error) {
+            throw new Error(error.message)
+        }
     },
     {
         name: "read_files",
@@ -41,11 +65,26 @@ export const readFile = tool(
 )
 
 export const updateFile = tool(
-    async ({ files }) => {
-        const response = await axios.patch(`${updateApiUrl}/update-file`, {
-            files
-        })
-        return JSON.stringify(response.data.result);
+    async ({ files }, config) => {
+        const projectId = config?.context?.projectId ?? config?.configurable?.projectId;
+        if (!projectId) {
+            throw new Error(
+                'projectId missing in tool runtime config'
+            );
+        }
+        try {
+
+            const writer = config.context?.writer ?? (() => { });
+            writer("Updating files..." + files.map(f => f.file).join(",") + "\n");
+            const response = await axios.patch(`http://sandbox-service-${projectId}:3000/update-file`, {
+                files
+            })
+            writer("Files updated successfully.\n");
+            return JSON.stringify(response.data.result);
+
+        } catch (error) {
+            throw new Error(error.message)
+        }
     },
     {
         name: "update_files",

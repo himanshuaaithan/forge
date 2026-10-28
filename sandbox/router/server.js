@@ -1,5 +1,5 @@
-import app from './src/app.js'
+import server from "./src/app.js"
 
-app.listen(3000,()=>{
+server.listen(3000,()=>{
     console.log('router-server is runing on port 3000')
 })
